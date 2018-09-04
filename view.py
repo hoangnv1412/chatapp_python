@@ -1,5 +1,5 @@
-from user_model import UserModel
-from province import ProvinceModel
+
+from models import *
 from user_manager import *
 from msvcrt import getch
 #inputkey = ord(getch())
@@ -66,6 +66,8 @@ def showMes(user_manager):
         print("\tcontent : {0}".format(value[3]))
         print("\ttime : {0}".format(value[4]))
         print("")
+
+
 def showDetailMes(user_manager):
     values = user_manager.showFriendList()
     print("Your friendlist: ")
@@ -76,12 +78,13 @@ def showDetailMes(user_manager):
     index = int(input("Enter index of person you chat with: "))
     person = values[index-1][0]
     chat_history = user_manager.getChatHistory(person)
-    for chat in range(chat_history):
+    for chat in chat_history:
         if (chat[0] == person):
             print("{0}".format(chat[2]))
         else :
             print("\t\t\t{0}".format(chat[2]))
     return 0
+
 
 def sendMes(user_manager):
     print("We offer you 2 ways:")
@@ -107,10 +110,18 @@ def sendMes(user_manager):
                     print(" {0}. : {1}".format( i, value[0]) )
                 inp = int(input("Enter friend index number: "))
                 content = input("Content: ")
-                user_manager.sendMes(values[inp-1][0],content)
+                receiver = values[inp-1][0]
+                res = user_manager.sendMes(receiver,content)
+                if res == 1:
+                    print("SENT")
+                elif res == 0:
+                    print("ERROR: You blocked user with username = {0}".format(receiver))
+                elif res == 2:
+                    print("ERROR: user with username = '{0}' does not exist".format(receiver))
             break
         print("Wrong syntax. Please try again")
         break
+
 
 def addFriend(user_manager):
     users = user_manager.getAllUsers()
@@ -119,7 +130,65 @@ def addFriend(user_manager):
     for user in users:
         i+=1
         print("\t{0}. {1}".value[1])
-    inp = int(input("Enter friend index number: "))
+    inp = int(input("Enter person index number u want to add friend: "))
+    value = user_manager.addFriend(users[i-1][1])
+    if value == 0 : print("ERROR : you blocked him/her")
+    elif value == 2 : print("You are already friend")
+    elif value == 1 : print("Added friend successfully")
+
+
+def showFriendList(user_manager):
+    values = user_manager.showFriendList()
+    for i in range(len(values)):
+        print("{0}. {1}".format(i+1,values[i][0]))
+
+
+def showFriendByAddr(user_manager):
+    values = user_manager.groupByCity()
+    province_model = ProvinceModel()
+    check = ""
+    count = 0
+    for value in values:
+        if (check != value[0]):
+            print(" {0}".format(province_model.convert_to_name(value[1])))
+            count = 0
+        count +=1
+        print("{0}. {1}".format(count,value[1]))
+
+
+def block(user_manager):
+    users = user_manager.getAllUsers()
+    print("All users: ")
+    i = 0
+    for user in users:
+        i+=1
+        print("\t{0}. {1}".value[1])
+    inp = int(input("Enter person index number u want to block: "))
+    
+    check = False
+    res = user_manager.isFriend()
+    if res == 1:
+        print("You are friend. Are you sure you want to block him/her? (Enter Y/N)")
+        check = True
+    if not(check):
+        res = user_manager.isBlocked()
+        if res == 1: 
+            print("Blocked already.")
+            check = True
+    if not(check):
+        print("Are you sure you want to block him/her? (Enter Y/N)")
+
+    inp = input("Your choice: ").split(" ")[0]
+    choice = inp[0]
+    while switch(choice):
+        if case ('Y','y'):
+            user_manager.block(users[i-1][1]) 
+        if case ('N','n'):
+            break;
+        print("Wrong syntax. Please try again")
+        break
+    
+    
 
 def afterLogin(userManager):
     check = 1
@@ -136,7 +205,7 @@ def afterLogin(userManager):
         print("Enter ctr+S to list friendList by address and username (in order asc)")
         print("Enter Ctr+B to go back")
         inp = input("Enter a number (1-7): ").split(" ")[0]
-        ch = ord(inp)
+        ch = ord(inp[0])
 
         while switch(ch):
             if case(49): 
@@ -146,35 +215,22 @@ def afterLogin(userManager):
                 showMes(userManager)
                 break
             if case(51):
-                
                 showDetailMes(userManager)
                 break
             if case(52):
                 addFriend(userManager)
                 break
             if case(53,12):
-                values = userManager.showFriendList()
-                for i in range(len(values)):
-                    print("{0}. {1}".format(i+1,values[i][0]))
-
+                showFriendList(userManager)
                 break
             if case(54):
-                userManager.block()
+                block(userManager)
                 break
             if case(55,2):
                 check = 0
                 break
             if case(19):
-                values = userManager.groupByCity()
-                province_model = ProvinceModel()
-                check = ""
-                count = 0
-                for value in values:
-                    if (check != value[0]):
-                        print(" {0}".format(province_model.convert_to_name(value[1])))
-                        count = 0
-                    count +=1
-                    print("{0}. {1}".format(count,value[1]))
+                showFriendByAddr(userManager)
                 break
 
             print("Wrong syntax. Please try again")

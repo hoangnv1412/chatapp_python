@@ -1,7 +1,9 @@
 import sqlite3
-from user_model import UserModel
+from models import UserModel
 from time import *
 
+#Class UserAuthen
+ 
 class UserAuthen: 
     __conn = sqlite3.connect("week4.db")
     __c = __conn.cursor()
@@ -44,7 +46,7 @@ class UserManager(UserAuthen):
             values = self.__c.fetchall()
         return values
 
-    def __insert_SQLite(self,query):
+    def __queries_SQLite(self,query):
         self.__c.execute(query)
         self.__conn.commit()
 
@@ -62,14 +64,18 @@ class UserManager(UserAuthen):
         else:
             return 0
     def isBlocked(self,person):
-        query = "SELECT relation.relation FROM relation "\
-            "WHERE (relation.user1 = '{0}' "\
-            "AND relation.user2 = '{1}') ".format(self.__usermodel.username,person)
+        query = "SELECT RELATION.relation FROM RELATION as a"\
+            "WHERE (a.user1 = '{0}' "\
+            "AND a.user2 = '{1}') "\
+            "OR (a.user1 = '{1}' "\
+            "AND a.user2 = '{0}')".format(self.__usermodel.username,person)
+            
         values = self.__select_SQLite(query,1)
         if (values[0] == 2) : 
             return 1
         else:
             return 0
+
 
     def sendMes(self,receiver,content):
         if self.isExisted(receiver):  
@@ -77,13 +83,41 @@ class UserManager(UserAuthen):
                 real_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
                 query = "INSERT INTO MESSAGE (sender,receiver,content,time) " \
 		            "VALUES('" + self.__usermodel.username + "','" + receiver + "','" + content + "','" + real_time + "')"
-                self.__insert_SQLite(query)
-                print("Sent message successfully")
-                
-            else: print("ERROR: You blocked user with username = {0}".format(receiver))
-        else: print("ERROR: user does not exist")
-    def addFriend(self):
-        return 0
+                self.__queries_SQLite(query)
+                return 1
+
+            else: return 0
+
+        else: return 2
+
+    def isFriend(self,person):
+        query = "SELECT * FROM FRIEND " \
+		"WHERE FRIEND.user1 = '{0}' " \
+        "AND FRIEND.user2 = '{1}' ".format(self.__usermodel.username,person)
+        value = self.__select_SQLite(query,1)
+        if (value == None):
+            return 0
+        return 1
+
+    def addFriend(self,person):
+        isBl = self.isBlocked(person)
+        isFr = self.isFriend(person)
+
+        if isBl : 
+            return 0
+        if isFr : 
+            return 2
+
+        if (not(isBl) and not(isFr) ) : 
+            query = "INSERT INTO RELATION (user1,user2,relation) " \
+             "VALUES('{0}','{1}')".format(self.__usermodel.username , person)
+            query2 = "INSERT INTO RELATION (user1,user2,relation) " \
+             "VALUES('{1}','{0}')".format(self.__usermodel.username , person)
+            self.__queries_SQLite(query)
+            self.__queries_SQLite(query2)
+            return 1
+            
+
     def showFriendList(self):
         query = "SELECT a.username FROM USER as a, RELATION as b" \
 		" WHERE b.user1 = '{0}' "\
@@ -102,11 +136,16 @@ class UserManager(UserAuthen):
        
     def getChatHistory(self,person):
         query = "SELECT b.sender,b.receiver,b.content FROM message as b " \
-		    " WHERE(b.sender = {0} AND b.receiver = '{1}')" \
+		    " WHERE(b.sender = '{0}' AND b.receiver = '{1}')" \
 		    " OR (b.receiver = '{0}' AND b.sender = '{1}')" \
-		    " ORDER BY b.time;"
+		    " ORDER BY b.time;".format(self.__usermodel.username,person)
         return self.__select_SQLite(query)
         
     def getAllUsers(self):
         query = "SELECT USER.username from USER"
         return self.__select_SQLite(query)
+    
+    def block(self,person):
+        ifFr = self.isFriend(person)
+        ifBl = self.isBlocked(person)
+        query = ""
