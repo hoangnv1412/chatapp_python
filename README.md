@@ -3,8 +3,11 @@
 Menu: 
   CHAT APP
   1.SIGN IN
+  
   2.SIGN UP
+  
   3. Exit application
+  
   Enter a number (1-3):
   
 After Signin successfully:
