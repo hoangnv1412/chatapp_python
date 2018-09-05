@@ -2,8 +2,34 @@ import sqlite3
 from models import UserModel
 from time import *
 
+#Class dbManager:
+    #for connect and query db file
+    #method:
+        #connectDb : for connecting database file
+        #select_SQLite : for select queries 
+        #queries_SQLite : for other kinds of queries 
+
 #Class UserAuthen
- 
+    #for sign_in and sign_up, and get user information
+    #methods:
+        #checkAuthen: check for user authentication, return 1 if login successfully, 0 for others
+        #signup: for sign up
+        #getUserInfo: return user info in UserModel-object-type
+
+#Class UserManager:
+    #for user acts after signing in
+    #methods:
+        #showMes: show all messages
+        #isExisted(string): return 1 if user exists, 0 if not
+        #isBlocked(string): return 1 if user and another account if in a block-relationship, 0 if not 
+        #isFriend(string): return 1 if user and another account are friends, 0 if not
+        #sendMes(string): send someone messages
+        #addfriend(string): add friend someone
+        #showFriendList(): show user's all friends
+        #Block(string): block someone
+        #groupByCity: group user's friends by their addresses
+        #getChatHistory(string): get all messages of user with a person
+        #getAllUser(): get all system's users
 
 class dbManager:
     def connectDb(self):
@@ -11,9 +37,10 @@ class dbManager:
         return conn
 
     def select_SQLite(self,query,num=0):
-        conn = self.connectDb()
+        conn = connectDb()
         c = conn.cursor()
         c.execute(query)
+        conn.commit()
 
         if num == 1:
             values = self.__c.fetchone()
@@ -22,13 +49,12 @@ class dbManager:
         return values
 
     def queries_SQLite(self,query):
-        conn = self.connectDb()
+        conn = self.__connectDb()
         conn.execute(query)
         conn.commit()
-        conn.close()
 
     def closeDb(self):
-        self.conn.close()
+        self.__conn.close()
 
 class UserAuthen(dbManager): 
     
