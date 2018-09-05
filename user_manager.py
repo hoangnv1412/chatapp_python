@@ -26,6 +26,7 @@ class dbManager:
         conn.execute(query)
         conn.commit()
         conn.close()
+
     def closeDb(self):
         self.conn.close()
 
