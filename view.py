@@ -232,7 +232,7 @@ def afterLogin(userManager):
             if case(19):
                 showFriendByAddr(userManager)
                 break
-
+                
             print("Wrong syntax. Please try again")
             break
             

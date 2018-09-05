@@ -4,61 +4,68 @@ from time import *
 
 #Class UserAuthen
  
-class UserAuthen: 
-    __conn = sqlite3.connect("week4.db")
-    __c = __conn.cursor()
-    __user_model = UserModel()
-    def __init__(self,username,password=""):
-        self.__username = username
-        self.__password = password
-        
-    def checkAuthen(self):
-        query = "SELECT * FROM USER WHERE USER.username = '{0}' AND USER.password = '{1}'".format(self.__username,self.__password)
-        self.__c.execute(query)
-        values = self.__c.fetchone()
-        if (values != None) : 
-            self.__user_model = UserModel(values[1],values[2],values[3],values[4],values[5])
-            return 1
-        else:
-            return 0
-    def signUp(self,user_model = UserModel()):
-        query = "INSERT INTO USER (username,password,name,DOB,sex) " \
-		            "VALUES({0},{1},{2},{3},{4})".format(user_model.username,user_model.get_pw,user_model.get_dob,user_model.get_sex)
-        self.__c.execute(query)
-        self.__conn.commit()
 
-    def getUserInfo(self):
-        return self.__user_model
-    
+class dbManager:
+    def connectDb(self):
+        conn = sqlite3.connect("week4.db")
+        return conn
 
-class UserManager(UserAuthen):
-    __conn = sqlite3.connect("week4.db")
-    __c = __conn.cursor()
-    def __init__(self,user_model):
-        self.__usermodel = user_model
-        
-    
-    def __select_SQLite(self,query,num=0):
-        self.__c.execute(query)
+    def select_SQLite(self,query,num=0):
+        conn = connectDb()
+        c = conn.cursor()
+        c.execute(query)
+        conn.commit()
+
         if num == 1:
             values = self.__c.fetchone()
         else: 
             values = self.__c.fetchall()
         return values
 
-    def __queries_SQLite(self,query):
-        self.__c.execute(query)
-        self.__conn.commit()
+    def queries_SQLite(self,query):
+        conn = self.__connectDb()
+        conn.execute(query)
+        conn.commit()
 
     def closeDb(self):
         self.__conn.close()
 
+class UserAuthen(dbManager): 
+    
+    __user_model = UserModel()
+
+    def __init__(self,username,password=""):
+        self.__username = username
+        self.__password = password
+        
+    def checkAuthen(self):
+        query = "SELECT * FROM USER WHERE USER.username = '{0}' AND USER.password = '{1}'".format(self.__username,self.__password)
+        values = self.select_SQLite(query)
+        if (values != None) : 
+            self.__user_model = UserModel(values[1],values[2],values[3],values[4],values[5])
+            return 1
+        else:
+            return 0
+
+    def signUp(self,user_model = UserModel()):
+        query = "INSERT INTO USER (username,password,name,DOB,sex) " \
+		            "VALUES({0},{1},{2},{3},{4})".format(user_model.username,user_model.get_pw,user_model.get_dob,user_model.get_sex)
+        self.queries_SQLite(query)
+
+    def getUserInfo(self):
+        return self.__user_model
+    
+
+class UserManager(dbManager):
+    def __init__(self,user_model):
+        self.__usermodel = user_model
+
     def showMes(self):
         query = "SELECT MESSAGE.* FROM MESSAGE,USER WHERE USER.username = '{0}';".format(self.__usermodel.username)
-        return self.__select_SQLite(query)
+        return self.select_SQLite(query)
     def isExisted(self,person):
         query = "SELECT * FROM USER WHERE USER.username = '{0}'".format(person)
-        values = self.__select_SQLite(query,1)
+        values = self.select_SQLite(query,1)
         if (values != None) : 
             return 1
         else:
@@ -70,7 +77,7 @@ class UserManager(UserAuthen):
             "OR (a.user1 = '{1}' "\
             "AND a.user2 = '{0}')".format(self.__usermodel.username,person)
             
-        values = self.__select_SQLite(query,1)
+        values = self.select_SQLite(query,1)
         if (values[0] == 2) : 
             return 1
         else:
@@ -83,7 +90,7 @@ class UserManager(UserAuthen):
                 real_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
                 query = "INSERT INTO MESSAGE (sender,receiver,content,time) " \
 		            "VALUES('" + self.__usermodel.username + "','" + receiver + "','" + content + "','" + real_time + "')"
-                self.__queries_SQLite(query)
+                self.queries_SQLite(query)
                 return 1
 
             else: return 0
@@ -94,7 +101,7 @@ class UserManager(UserAuthen):
         query = "SELECT * FROM FRIEND " \
 		"WHERE FRIEND.user1 = '{0}' " \
         "AND FRIEND.user2 = '{1}' ".format(self.__usermodel.username,person)
-        value = self.__select_SQLite(query,1)
+        value = self.select_SQLite(query,1)
         if (value == None):
             return 0
         return 1
@@ -113,8 +120,8 @@ class UserManager(UserAuthen):
              "VALUES('{0}','{1}')".format(self.__usermodel.username , person)
             query2 = "INSERT INTO RELATION (user1,user2,relation) " \
              "VALUES('{1}','{0}')".format(self.__usermodel.username , person)
-            self.__queries_SQLite(query)
-            self.__queries_SQLite(query2)
+            self.queries_SQLite(query)
+            self.queries_SQLite(query2)
             return 1
             
 
@@ -124,7 +131,7 @@ class UserManager(UserAuthen):
 		" AND a.username = b.user2 " \
         " AND b.relation = 1 "\
 		" ORDER BY a.username".format(self.__usermodel.username)
-        return self.__select_SQLite(query)
+        return self.select_SQLite(query)
 
     def groupByCity(self):
         query = "SELECT a.username,c.province  FROM USER as a, RELATION as b, ADDRESS as c" \
@@ -132,20 +139,32 @@ class UserManager(UserAuthen):
 		    " AND c.username = b.user2 AND a.username = b.user2 "\
             " AND b.relation = 1"\
 		    " ORDER BY c.province;".format(self.__usermodel.username)
-        return self.__select_SQLite(query)
+        return self.select_SQLite(query)
        
     def getChatHistory(self,person):
         query = "SELECT b.sender,b.receiver,b.content FROM message as b " \
 		    " WHERE(b.sender = '{0}' AND b.receiver = '{1}')" \
 		    " OR (b.receiver = '{0}' AND b.sender = '{1}')" \
 		    " ORDER BY b.time;".format(self.__usermodel.username,person)
-        return self.__select_SQLite(query)
+        return self.select_SQLite(query)
         
     def getAllUsers(self):
         query = "SELECT USER.username from USER"
-        return self.__select_SQLite(query)
+        return self.select_SQLite(query)
     
-    def block(self,person):
-        ifFr = self.isFriend(person)
-        ifBl = self.isBlocked(person)
-        query = ""
+    def block(self,person,case=0):
+        if case == 1:
+            query = "UPDATE RELATION "\
+               "SET relation = 2 " \
+               "WHERE user1 = {0} and user2 = {1} ".format(self.__usermodel.username,person)
+            query2 = "DELETE FROM RELATION "\
+                "WHERE user1={1} and user2 = {0} ".format(self.__usermodel.username,person)
+            self.queries_SQLite(query)
+            self.queries_SQLite(query2)
+            
+        else: 
+            query = "INSERT INTO RELATION(user1,user2,relation) "\
+                "VALUES({1},{0},2) ".format(self.__usermodel.username,person)
+            self.queries_SQLite(query)
+
+            
