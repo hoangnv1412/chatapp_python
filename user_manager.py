@@ -11,10 +11,9 @@ class dbManager:
         return conn
 
     def select_SQLite(self,query,num=0):
-        conn = connectDb()
+        conn = self.connectDb()
         c = conn.cursor()
         c.execute(query)
-        conn.commit()
 
         if num == 1:
             values = self.__c.fetchone()
@@ -23,12 +22,12 @@ class dbManager:
         return values
 
     def queries_SQLite(self,query):
-        conn = self.__connectDb()
+        conn = self.connectDb()
         conn.execute(query)
         conn.commit()
-
+        conn.close()
     def closeDb(self):
-        self.__conn.close()
+        self.conn.close()
 
 class UserAuthen(dbManager): 
     
