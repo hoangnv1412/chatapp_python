@@ -71,7 +71,7 @@ class UserManager(dbManager):
         else:
             return 0
     def isBlocked(self,person):
-        query = "SELECT RELATION.relation FROM RELATION as a"\
+        query = "SELECT RELATION.relation FROM RELATION as a "\
             "WHERE (a.user1 = '{0}' "\
             "AND a.user2 = '{1}') "\
             "OR (a.user1 = '{1}' "\
@@ -89,7 +89,7 @@ class UserManager(dbManager):
             if not self.isBlocked(receiver):
                 real_time = strftime("%Y-%m-%d %H:%M:%S", gmtime())
                 query = "INSERT INTO MESSAGE (sender,receiver,content,time) " \
-		            "VALUES('" + self.__usermodel.username + "','" + receiver + "','" + content + "','" + real_time + "')"
+		            "VALUES('{0}','{1}','{2}','{3}')".format(self.__usermodel.username,receiver, content,real_time)
                 self.queries_SQLite(query)
                 return 1
 
@@ -134,17 +134,17 @@ class UserManager(dbManager):
         return self.select_SQLite(query)
 
     def groupByCity(self):
-        query = "SELECT a.username,c.province  FROM USER as a, RELATION as b, ADDRESS as c" \
+        query = "SELECT a.username,c.province  FROM USER as a, RELATION as b, ADDRESS as c " \
 		    " WHERE b.user1 = '{0}' "\
 		    " AND c.username = b.user2 AND a.username = b.user2 "\
-            " AND b.relation = 1"\
+            " AND b.relation = 1 "\
 		    " ORDER BY c.province;".format(self.__usermodel.username)
         return self.select_SQLite(query)
        
     def getChatHistory(self,person):
         query = "SELECT b.sender,b.receiver,b.content FROM message as b " \
-		    " WHERE(b.sender = '{0}' AND b.receiver = '{1}')" \
-		    " OR (b.receiver = '{0}' AND b.sender = '{1}')" \
+		    " WHERE(b.sender = '{0}' AND b.receiver = '{1}') " \
+		    " OR (b.receiver = '{0}' AND b.sender = '{1}') " \
 		    " ORDER BY b.time;".format(self.__usermodel.username,person)
         return self.select_SQLite(query)
         
@@ -164,7 +164,7 @@ class UserManager(dbManager):
             
         else: 
             query = "INSERT INTO RELATION(user1,user2,relation) "\
-                "VALUES({1},{0},2) ".format(self.__usermodel.username,person)
+                " VALUES({1},{0},2) ".format(self.__usermodel.username,person)
             self.queries_SQLite(query)
 
             
